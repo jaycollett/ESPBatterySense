@@ -6,6 +6,8 @@ cache:
 
 install:
 - pip install -U platformio
+- platformio update
+- platformio lib -g install 1
 
 env:
 - BOARD=esp12e
@@ -15,11 +17,11 @@ script:
   - "echo $HOME"
   - "ls $PWD"
   - pio lib install https://github.com/jaycollett/ESPBatterySense.git
+  - pio lib install "Adafruit DHT Unified"
   - pio lib install "PubSubClient"
   - pio lib install "Adafruit Unified Sensor"
   - pio lib install "DHT sensor library"
   - pio lib install "SerialESP8266wifi"
-  - pio lib install "Adafruit DHT Unified"
   - platformio ci --board=$BOARD --lib=$PWD/Arduino\ Code/ESPBatterySense $PWD/Arduino\ Code/ESPBatterySense/ESPBatterySense/ESPBatterySense.ino
   
 notifications:
