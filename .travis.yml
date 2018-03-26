@@ -16,8 +16,9 @@ script:
   - "ls $PWD"
   - pio lib install https://github.com/jaycollett/ESPBatterySense.git
   - pio lib install "PubSubClient"
-  - pio lib install "Adafruit-DHT"
-  - pio lib install "ESP8266wifi"
+  - pio lib install 18
+  - pio lib install 19
+  - pio lib install 1101
   - platformio ci --board=$BOARD --lib=$PWD/Arduino\ Code/ESPBatterySense $PWD/Arduino\ Code/ESPBatterySense/ESPBatterySense.ino
   
 notifications:
