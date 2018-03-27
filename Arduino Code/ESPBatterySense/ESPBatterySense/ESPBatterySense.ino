@@ -4,19 +4,20 @@
 
 #define DHTTYPE DHT22
 #define DHTPIN 2
+#define DHTPWRPIN 0
 
-#define WIFI_SSID "xxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxx"
+#define WIFI_PASS "xxxxxxxxxx"
 #define MQTT_PORT 1883
 
 char  mqtt_server[] = "192.168.0.5";
-char  mqtt_username[] = "xxxxxxxxxxxxxxxxx";
-char  mqtt_password[] = "xxxxxxxxxxxxxxx";
-char  mqtt_clientid[] = "filamentsensor1";
+char  mqtt_username[] = "filamentsensors";
+char  mqtt_password[] = "xxxxxxxxxxx";
+char  mqtt_clientid[] = "xxxxxxxxxxxxxxx";
 
 ADC_MODE(ADC_VCC);
 
-const int sleepTimeSeconds = 30; // deep sleep for 3600 seconds, 1 hour
+const int sleepTimeSeconds = 3600; // deep sleep for 3600 seconds, 1 hour
 
 const String baseTopic = "filamentsensor1";
 const String tempTopic = baseTopic + "/" + "temperature";
@@ -36,11 +37,16 @@ PubSubClient mqttclient(WiFiClient);
 DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
+
+  pinMode(DHTPWRPIN, OUTPUT);
+  digitalWrite(DHTPWRPIN, HIGH);
+  delay(200); // give dht time to power up before moving on
+  
   Serial.begin(115200);
-  delay(150);
+  delay(200);
+  
   Serial.println("Waking up to send data to MQTT server...");
   dht.begin();
-  delay(2000); // give sensor time to wake up and process a temp reading, it's a very slow sensor
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -53,9 +59,9 @@ void setup() {
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.localIP());   
   delay(3000); // give time for network to stabalize
-  
+
   mqttclient.setServer(mqtt_server, MQTT_PORT);
 }
 
@@ -65,9 +71,11 @@ void loop() {
   
   Serial.println("Reading temp/hum from DHT22");
   dhtRead();
+  digitalWrite(DHTPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
+  
   Serial.println("Reading VCC from ESP");
   vccRead();
-
+  
   int mqttRetValue;
   
   Serial.println("Calling MQTT Connect");
