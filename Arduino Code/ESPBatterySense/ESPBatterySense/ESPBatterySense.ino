@@ -5,14 +5,14 @@
 
 #define BMEPWRPIN 5
 
-#define WIFI_SSID "GoofWiFi"
-#define WIFI_PASS "Gabriel01!"
+#define WIFI_SSID "xxxxxx"
+#define WIFI_PASS "xxxxxx"
 #define MQTT_PORT 1883
 
 char  fmversion[7] = "v1.0";              // firmware version of this sensor
-char  mqtt_server[] = "192.168.0.5";      // MQTT broker IP address
+char  mqtt_server[] = "192.168.0.0";      // MQTT broker IP address
 char  mqtt_username[] = "filamentsensors";     // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "!filsensors01a!";   // password for MQTT broker
+char  mqtt_password[] = "xxxxxxxxxxxxxxxxx";   // password for MQTT broker
 char  mqtt_clientid[] = "filamentsensor1";     // client id for connections to MQTT broker
 
 
