@@ -1,66 +1,73 @@
-#include <DHT.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
-#define DHTTYPE DHT22
-#define DHTPIN 2
-#define DHTPWRPIN 0
+#define BMEPWRPIN 5
 
-#define WIFI_SSID "xxxxxxx"
-#define WIFI_PASS "xxxxxxxxxx"
+#define WIFI_SSID "GoofWiFi"
+#define WIFI_PASS "Gabriel01!"
 #define MQTT_PORT 1883
 
-char  mqtt_server[] = "192.168.0.5";
-char  mqtt_username[] = "filamentsensors";
-char  mqtt_password[] = "xxxxxxxxxxx";
-char  mqtt_clientid[] = "xxxxxxxxxxxxxxx";
+char  fmversion[7] = "v1.0";              // firmware version of this sensor
+char  mqtt_server[] = "192.168.0.5";      // MQTT broker IP address
+char  mqtt_username[] = "filamentsensors";     // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "!filsensors01a!";   // password for MQTT broker
+char  mqtt_clientid[] = "filamentsensor1";     // client id for connections to MQTT broker
+
 
 ADC_MODE(ADC_VCC);
 
-const int sleepTimeSeconds = 3600; // deep sleep for 3600 seconds, 1 hour
+const int sleepTimeSeconds = 30; // deep sleep for 3600 seconds, 1 hour
 
 const String baseTopic = "filamentsensor1";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
+const String presTopic = baseTopic + "/" + "pressure";
 const String vccTopic  = baseTopic + "/" + "vcc";
-const String firmTopic = baseTopic + "/" + "firmwarever";
+const String fwTopic   = baseTopic + "/" + "firmwarever";
+
 
 char temperature[6];
 char humidity[6];
+char pressure[7];
 char vcc[10];
-char firmwarever[7] = "v0.6a";
 
 IPAddress ip;
 
 WiFiClient WiFiClient;
 PubSubClient mqttclient(WiFiClient);
-DHT dht(DHTPIN, DHTTYPE);
+Adafruit_BME280 bme; // I2C init
 
 void setup() {
 
-  pinMode(DHTPWRPIN, OUTPUT);
-  digitalWrite(DHTPWRPIN, HIGH);
-  delay(200); // give dht time to power up before moving on
-  
+  pinMode(BMEPWRPIN, OUTPUT);
   Serial.begin(115200);
-  delay(200);
-  
+
   Serial.println("Waking up to send data to MQTT server...");
-  dht.begin();
+  Wire.begin(15, 4); 
+  Wire.setClock(100000);
+  Serial.println("Searching for sensors");
+
+  digitalWrite(BMEPWRPIN, HIGH);
+  delay(100);
+  if (!bme.begin(0x76)) {
+    Serial.println("Could not find a valid BME280 sensor, check wiring!");
+    while (1);
+  }
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(250);
     Serial.print(".");
   }
 
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());   
-  delay(3000); // give time for network to stabalize
+  Serial.println(WiFi.localIP());
 
   mqttclient.setServer(mqtt_server, MQTT_PORT);
 }
@@ -68,16 +75,18 @@ void setup() {
 void loop() {
 
   yield();
-  
-  Serial.println("Reading temp/hum from DHT22");
-  dhtRead();
-  digitalWrite(DHTPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
-  
-  Serial.println("Reading VCC from ESP");
+
+  Serial.println("Reading BME data...");
+  digitalWrite(BMEPWRPIN, HIGH);
+  delay(100);
+  bmeRead();
+  digitalWrite(BMEPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
+
+  Serial.println("Reading VCC from ESP...");
   vccRead();
   
   int mqttRetValue;
-  
+
   Serial.println("Calling MQTT Connect");
   MQTT_connect(); // connect to wifi/mqtt as needed
   Serial.println("Pushing data to MQTT server");
@@ -89,13 +98,21 @@ void loop() {
   mqttRetValue = mqttclient.publish(tempTopic.c_str(), temperature);
   Serial.print("Temp return value: ");
   Serial.println(mqttRetValue);
-  
+
   Serial.print("Topic: ");
   Serial.println(humiTopic);
   Serial.print("Sending humidity value: ");
   Serial.println(humidity);
   mqttRetValue = mqttclient.publish(humiTopic.c_str(), humidity);
   Serial.print("Humidity return value: ");
+  Serial.println(mqttRetValue);
+
+  Serial.print("Topic: ");
+  Serial.println(presTopic);
+  Serial.print("Sending pressure value: ");
+  Serial.println(pressure);
+  mqttRetValue = mqttclient.publish(presTopic.c_str(), pressure);
+  Serial.print("Pressure return value: ");
   Serial.println(mqttRetValue);
 
   Serial.print("Topic: ");
@@ -107,17 +124,17 @@ void loop() {
   Serial.println(mqttRetValue);
 
   Serial.print("Topic: ");
-  Serial.println(firmTopic);
+  Serial.println(fwTopic);
   Serial.print("Sending fw version value: ");
-  Serial.println(firmwarever);
-  mqttRetValue = mqttclient.publish(firmTopic.c_str(), firmwarever);
+  Serial.println(fmversion);
+  mqttRetValue = mqttclient.publish(fwTopic.c_str(), fmversion);
   Serial.print("firmware ver return value: ");
   Serial.println(mqttRetValue);
 
   yield();
-  delay(2500); // yield and delay, if we go to sleep too quickly the mqtt message never gets processed
-  
-  
+  delay(1500); // yield and delay, if we go to sleep too quickly the mqtt message never gets processed
+
+
   Serial.println("Going to sleep now!");
   ESP.deepSleep(sleepTimeSeconds * 1000000);
 }
@@ -159,24 +176,17 @@ void MQTT_connect() {
 
 void vccRead() {
   float v  = ESP.getVcc() / 1000.0;
-  dtostrf(v, 5, 3, vcc);
+  dtostrf(v, 5, 2, vcc);
 }
 
-void dhtRead() {
-  float t;
-  t = dht.readTemperature(true); // true param tells the library to return temp in F, not C
-  float h;
-  h = dht.readHumidity();
+void bmeRead() {
+  float t = (bme.readTemperature()*9/5+32-13);  // converted to F from C
+  float h = bme.readHumidity();
+  float p = bme.readPressure()/3389.39; // get pressure in inHg
 
-  // Check if any reads failed and if so, set values to zero (obvious invalid readings)
-  if (isnan(h) || isnan(t)) {
-    Serial.println("Failed to read from DHT sensor!");
-    t = 99.99;
-    h = 99.99;
-  }
-
-  dtostrf(t, 5, 2, temperature);
-  dtostrf(h, 6, 2, humidity);
+  dtostrf(t, 5, 2, temperature); // 5 chars total, 2 decimals (BME's are really accurate)
+  dtostrf(h, 5, 2, humidity);   // 5 chars total, 2 decimals (BME's are really accurate)
+  dtostrf(p, 5, 2, pressure);  // 5 chars total, 2 decimals (BME's are really accurate)
 }
 
 
