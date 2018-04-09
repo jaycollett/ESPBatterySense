@@ -6,8 +6,8 @@ The firmware is designed to put the ESP in deep sleep for 1 hour and upon reset,
 
 The design if quite easy to hand solder, which is an added bonus in my book.
 
-I've included my BOM below:
-
+**BOM**
+----------
 1. [ESP-12F](https://www.aliexpress.com/item/ESP-12S-ESP-12F-upgrade-ESP8266-remote-serial-Port-WIFI-wireless-module-2016-New-version/32715475579.html)
 2. [BME 280 Module](https://www.aliexpress.com/item/GY-BME280-3-3-precision-altimeter-atmospheric-pressure-BME280-sensor-module/32688607454.html) (tried and failed multiple times to oven reflow the IC alone)
 3. [10K OHM 0805 Resistor](https://www.digikey.com/product-detail/en/yageo/RC0805FR-0710KL/311-10.0KCRCT-ND/730482) (QTY: 3)
