@@ -3,22 +3,19 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-#define BMEPWRPIN 5
+#define BMEPWRPIN 12
 
-#define WIFI_SSID "xxxxxx"
-#define WIFI_PASS "xxxxxx"
+#define WIFI_SSID "xxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "v1.0";              // firmware version of this sensor
-char  mqtt_server[] = "192.168.0.0";      // MQTT broker IP address
-char  mqtt_username[] = "filamentsensors";     // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxxxxxxx";   // password for MQTT broker
-char  mqtt_clientid[] = "filamentsensor1";     // client id for connections to MQTT broker
+char  fmversion[7] = "v1.1";                  // firmware version of this sensor
+char  mqtt_server[] = "192.168.0.0";          // MQTT broker IP address
+char  mqtt_username[] = "filamentsensors";    // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "xxxxxxxxxxxxxxx";    // password for MQTT broker
+char  mqtt_clientid[] = "filamentsensor1";    // client id for connections to MQTT broker
 
-
-ADC_MODE(ADC_VCC);
-
-const int sleepTimeSeconds = 30; // deep sleep for 3600 seconds, 1 hour
+const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 
 const String baseTopic = "filamentsensor1";
 const String tempTopic = baseTopic + "/" + "temperature";
@@ -28,9 +25,9 @@ const String vccTopic  = baseTopic + "/" + "vcc";
 const String fwTopic   = baseTopic + "/" + "firmwarever";
 
 
-char temperature[6];
-char humidity[6];
-char pressure[7];
+char temperature[10];
+char humidity[10];
+char pressure[10];
 char vcc[10];
 
 IPAddress ip;
@@ -39,24 +36,43 @@ WiFiClient WiFiClient;
 PubSubClient mqttclient(WiFiClient);
 Adafruit_BME280 bme; // I2C init
 
+ADC_MODE(ADC_VCC);
+
 void setup() {
 
   pinMode(BMEPWRPIN, OUTPUT);
   Serial.begin(115200);
 
   Serial.println("Waking up to send data to MQTT server...");
-  Wire.begin(15, 4); 
+  Wire.begin(4, 5);
   Wire.setClock(100000);
   Serial.println("Searching for sensors");
 
   digitalWrite(BMEPWRPIN, HIGH);
-  delay(100);
+  delay(2000);
   if (!bme.begin(0x76)) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1);
   }
 
   WiFi.mode(WIFI_STA);
+  WiFi.persistent(false);
+  mqttclient.setServer(mqtt_server, MQTT_PORT);
+}
+
+void loop() {
+
+  Serial.println("Reading BME data...");
+  digitalWrite(BMEPWRPIN, HIGH);
+  delay(750);
+  bmeRead();
+  digitalWrite(BMEPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
+
+  Serial.println("Reading VCC from ESP...");
+  vccRead();
+
+  int mqttRetValue;
+  WiFi.forceSleepWake();
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -68,24 +84,6 @@ void setup() {
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-
-  mqttclient.setServer(mqtt_server, MQTT_PORT);
-}
-
-void loop() {
-
-  yield();
-
-  Serial.println("Reading BME data...");
-  digitalWrite(BMEPWRPIN, HIGH);
-  delay(100);
-  bmeRead();
-  digitalWrite(BMEPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
-
-  Serial.println("Reading VCC from ESP...");
-  vccRead();
-  
-  int mqttRetValue;
 
   Serial.println("Calling MQTT Connect");
   MQTT_connect(); // connect to wifi/mqtt as needed
@@ -133,10 +131,16 @@ void loop() {
 
   yield();
   delay(1500); // yield and delay, if we go to sleep too quickly the mqtt message never gets processed
-
+  WiFi.forceSleepBegin();
 
   Serial.println("Going to sleep now!");
   ESP.deepSleep(sleepTimeSeconds * 1000000);
+
+  // infinite loop to run for approx ~100ms while the deepsleep command completes
+  // we don't want any code running after the deep sleep or for the loop to iterate again
+  while (true) {
+    delay(50);
+  }
 }
 
 
@@ -180,9 +184,9 @@ void vccRead() {
 }
 
 void bmeRead() {
-  float t = (bme.readTemperature()*9/5+32-13);  // converted to F from C
+  float t = (bme.readTemperature() * 9 / 5 + 32 - 13); // converted to F from C
   float h = bme.readHumidity();
-  float p = bme.readPressure()/3389.39; // get pressure in inHg
+  float p = bme.readPressure() / 3389.39; // get pressure in inHg
 
   dtostrf(t, 5, 2, temperature); // 5 chars total, 2 decimals (BME's are really accurate)
   dtostrf(h, 5, 2, humidity);   // 5 chars total, 2 decimals (BME's are really accurate)
