@@ -5,14 +5,14 @@
 
 #define BMEPWRPIN 12
 
-#define WIFI_SSID "xxxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxx"
 #define MQTT_PORT 1883
 
 char  fmversion[7] = "v1.1";                  // firmware version of this sensor
 char  mqtt_server[] = "192.168.0.0";          // MQTT broker IP address
 char  mqtt_username[] = "filamentsensors";    // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxxxxx";    // password for MQTT broker
+char  mqtt_password[] = "!filsensors01a!";    // password for MQTT broker
 char  mqtt_clientid[] = "filamentsensor1";    // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
@@ -49,7 +49,7 @@ void setup() {
   Serial.println("Searching for sensors");
 
   digitalWrite(BMEPWRPIN, HIGH);
-  delay(2000);
+  delay(500);
   if (!bme.begin(0x76)) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1);
@@ -64,9 +64,11 @@ void loop() {
 
   Serial.println("Reading BME data...");
   digitalWrite(BMEPWRPIN, HIGH);
-  delay(750);
+  delay(10000); // delay to ensure bme has time to stabalize
   bmeRead();
-  digitalWrite(BMEPWRPIN, LOW); // shut down power to the DHT now, trying to save as much power as possible
+  delay(10000); // get rid of first readings and read again, should give us most accurate readings (20s of uptime isn't too bad with wifi off)
+  bmeRead();
+  digitalWrite(BMEPWRPIN, LOW); // shut down power to the BME now, trying to save as much power as possible
 
   Serial.println("Reading VCC from ESP...");
   vccRead();
@@ -188,9 +190,9 @@ void bmeRead() {
   float h = bme.readHumidity();
   float p = bme.readPressure() / 3389.39; // get pressure in inHg
 
-  dtostrf(t, 5, 2, temperature); // 5 chars total, 2 decimals (BME's are really accurate)
-  dtostrf(h, 5, 2, humidity);   // 5 chars total, 2 decimals (BME's are really accurate)
-  dtostrf(p, 5, 2, pressure);  // 5 chars total, 2 decimals (BME's are really accurate)
+  dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals (BME's are really accurate)
+  dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals (BME's are really accurate)
+  dtostrf(p, 5, 2, pressure);     // 5 chars total, 2 decimals (BME's are really accurate)
 }
 
 
