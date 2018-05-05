@@ -1,18 +1,18 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
+#include "Wire.h"
+#include "SparkFunBME280.h"
 
 #define BMEPWRPIN 12
 
-#define WIFI_SSID "xxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "v1.1";                  // firmware version of this sensor
+char  fmversion[7] = "v1.2";                  // firmware version of this sensor
 char  mqtt_server[] = "192.168.0.0";          // MQTT broker IP address
 char  mqtt_username[] = "filamentsensors";    // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "!filsensors01a!";    // password for MQTT broker
+char  mqtt_password[] = "!filsensors01";      // password for MQTT broker
 char  mqtt_clientid[] = "filamentsensor1";    // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
@@ -34,7 +34,8 @@ IPAddress ip;
 
 WiFiClient WiFiClient;
 PubSubClient mqttclient(WiFiClient);
-Adafruit_BME280 bme; // I2C init
+BME280 bmeSensor; //Global sensor object
+
 
 ADC_MODE(ADC_VCC);
 
@@ -44,16 +45,24 @@ void setup() {
   Serial.begin(115200);
 
   Serial.println("Waking up to send data to MQTT server...");
+
+  bmeSensor.settings.commInterface = I2C_MODE;
+  bmeSensor.settings.I2CAddress = 0x76;
+  bmeSensor.settings.tempOverSample = 1;
+  bmeSensor.settings.humidOverSample = 1;
+
   Wire.begin(4, 5);
-  Wire.setClock(100000);
+  //Wire.setClock(400000); //Increase to fast I2C speed!
   Serial.println("Searching for sensors");
 
   digitalWrite(BMEPWRPIN, HIGH);
-  delay(500);
-  if (!bme.begin(0x76)) {
+  delay(30); // allow sensor to start ~10ms plus 20ms buffer
+  if (!bmeSensor.begin()) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1);
   }
+  bmeSensor.setMode(MODE_SLEEP); //Sleep for now
+  delay(6000); // allow things to settle
 
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
@@ -63,13 +72,18 @@ void setup() {
 void loop() {
 
   Serial.println("Reading BME data...");
-  digitalWrite(BMEPWRPIN, HIGH);
-  delay(10000); // delay to ensure bme has time to stabalize
-  bmeRead();
-  delay(10000); // get rid of first readings and read again, should give us most accurate readings (20s of uptime isn't too bad with wifi off)
-  bmeRead();
-  digitalWrite(BMEPWRPIN, LOW); // shut down power to the BME now, trying to save as much power as possible
-
+  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
+  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
+  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
+  bmeSensorRead();
+  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
+  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
+  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
+  bmeSensorRead();
+  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
+  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
+  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
+  bmeSensorRead();
   Serial.println("Reading VCC from ESP...");
   vccRead();
 
@@ -185,10 +199,10 @@ void vccRead() {
   dtostrf(v, 5, 2, vcc);
 }
 
-void bmeRead() {
-  float t = (bme.readTemperature() * 9 / 5 + 32 - 13); // converted to F from C
-  float h = bme.readHumidity();
-  float p = bme.readPressure() / 3389.39; // get pressure in inHg
+void bmeSensorRead() {
+  float h = bmeSensor.readFloatHumidity();
+  float t = bmeSensor.readTempF();
+  float p = bmeSensor.readFloatPressure();
 
   dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals (BME's are really accurate)
   dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals (BME's are really accurate)
