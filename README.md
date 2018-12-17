@@ -11,7 +11,7 @@ Unfortunately, this design requires a reflow solution as the SI7021 is not somet
 1. [ESP-12S](https://www.aliexpress.com/item/ESP8266-ESP-12E-serial-WIFI-wireless-module-wireless-transceiver-Complete-circuit-impedance-matching-better-signal/32324777806.html)
 2. [SI7021-A20](https://www.aliexpress.com/item/100-brand-new-original-Si7021-A20-GM1R-Si7021-A20/32834030103.html) (with protective cover and A20 version not A10)
 3. [10K OHM 0805 Resistor](https://www.digikey.com/product-detail/en/yageo/RC0805FR-0710KL/311-10.0KCRCT-ND/730482) (QTY: 5)
-4. [0.1UF Ceramic Capacitor X7R 16V 0603] (https://www.digikey.com/product-detail/en/samsung-electro-mechanics/CL10B104KO8NNNC/1276-1005-1-ND/3889091) (QTY: 1)
+4. [0.1UF Ceramic Capacitor X7R 16V 0603](https://www.digikey.com/product-detail/en/samsung-electro-mechanics/CL10B104KO8NNNC/1276-1005-1-ND/3889091) (QTY: 1)
 6. [Custom PCB](https://oshpark.com/shared_projects/NEJbJ0QY) from OSHPark.com
 7. [JST connector](https://www.digikey.com/product-detail/en/jst-sales-america-inc/S2B-PH-K-S%28LF%29%28SN%29/455-1719-ND/926626) for battery
 7. Battery (any ~3.3V battery source)
