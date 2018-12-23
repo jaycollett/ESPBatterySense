@@ -14,7 +14,7 @@ Unfortunately, this design requires a reflow solution as the SI7021 is not somet
 4. 0.1UF Ceramic Capacitor X7R 16V 0805 (QTY: 1)
 6. [Custom PCB](https://oshpark.com/shared_projects/NEJbJ0QY) from OSHPark.com
 7. [JST connector](https://www.digikey.com/product-detail/en/jst-sales-america-inc/S2B-PH-K-S%28LF%29%28SN%29/455-1719-ND/926626) for battery
-7. Battery (any ~3.3V battery source)
+7. Battery (any ~3.3V battery source, I'm using 2 alkaline AA batteries)
 8. Optional header for programming and debug pins
 9. Enclosure of some sort (once I finalize my battery size, I'll upload a 3D printable enclosure)
 #
