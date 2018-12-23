@@ -17,7 +17,7 @@ script:
   - "echo $HOME"
   - "ls $PWD"
   - pio lib install https://github.com/jaycollett/ESPBatterySense.git
-  - pio lib install "SparkFun BME280"
+  - pio lib install "Adafruit Si7021 Library@1.1.0"
   - pio lib install "PubSubClient"
   - pio lib install "SerialESP8266wifi"
   - platformio ci --board=$BOARD --lib=$PWD/Arduino\ Code/ESPBatterySense $PWD/Arduino\ Code/ESPBatterySense/ESPBatterySense/ESPBatterySense.ino
