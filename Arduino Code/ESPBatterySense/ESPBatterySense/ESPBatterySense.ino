@@ -5,19 +5,19 @@
 
 #define sensorPowerPin 12
 
-#define WIFI_SSID "xxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
 char  fmversion[7] = "v2.1";                  // firmware version of this sensor
-char  mqtt_server[] = "192.168.0.1";          // MQTT broker IP address
-char  mqtt_username[] = "xxxxxxxxxxxxxxxxx";    // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxxxxxxx";    // password for MQTT broker
-char  mqtt_clientid[] = "xxxxxxxxxxxxxxxxx";    // client id for connections to MQTT broker
+char  mqtt_server[] = "192.168.0.x";          // MQTT broker IP address
+char  mqtt_username[] = "xxxxxxxxxxxxxxx";    // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "xxxxxxxxxxxxx";    // password for MQTT broker
+char  mqtt_clientid[] = "filamentsensor5";    // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 
-const String baseTopic = "filamentsensor2";
+const String baseTopic = "filamentsensor5";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
 const String vccTopic  = baseTopic + "/" + "vcc";
@@ -51,7 +51,7 @@ void setup() {
     Serial.println("Could not find a valid SI7021 sensor, check wiring!");
     while (1);
   }
-  delay(250); // allow sensor and power to settle
+  delay(350); // allow sensor and power to settle
   
   WiFi.hostname(baseTopic);
   WiFi.mode(WIFI_STA);
