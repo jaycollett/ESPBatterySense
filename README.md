@@ -4,7 +4,7 @@ This project was inspired by my desire to track the humidity, and to a much less
 
 The firmware is designed to put the ESP in deep sleep for 1 hour and upon reset, take a sample of humidity, temperature, voltage of battery, and then transmit that to my MQTT broker (which happens to be part of my HASS.IO setup). I originally had been using a LiPo battery from Adafruit, and while it worked, it was providing > 3.6V to the board directly. I never saw any negative issues with such a high voltage from the BME280 sensor or the ESP, but it's not a good design practice and it did cause the ESP to consume far more power in deep sleep than voltages closer to 3.3V. For these reasons, I've switched to (2) AA alkaline batteries and have had great longevity thus far with them. Running the prototype design for well over 3 weeks with a tenth of a volt drop on the batteries.
 
-Unfortunately, this design requires a reflow solution as the SI7021 is not something I would classify as easily hand soldered, it's also the reason I'm keeping the other design files available which use components which can all easily be hand soldered. 
+Unfortunately, this design requires a reflow solution as the SI7021 is not something I would classify as easily hand soldered. 
 
 **BOM**
 ----------
