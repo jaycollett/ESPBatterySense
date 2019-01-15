@@ -1,69 +1,59 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include "Wire.h"
-#include "SparkFunBME280.h"
+#include "Adafruit_Si7021.h"
 
-#define BMEPWRPIN 12
 
-#define WIFI_SSID "xxxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxx"
+#define sensorPowerPin 12
+
+#define WIFI_SSID "xxxxxxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "v1.2";                  // firmware version of this sensor
-char  mqtt_server[] = "192.168.0.0";          // MQTT broker IP address
-char  mqtt_username[] = "filamentsensors";    // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "!filsensors01";      // password for MQTT broker
-char  mqtt_clientid[] = "filamentsensor1";    // client id for connections to MQTT broker
+char  fmversion[7] = "v2.1";                  // firmware version of this sensor
+char  mqtt_server[] = "192.168.0.x";          // MQTT broker IP address
+char  mqtt_username[] = "xxxxxxxxxxxxxxx";    // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "xxxxxxxxxxxxx";    // password for MQTT broker
+char  mqtt_clientid[] = "filamentsensor5";    // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 
-const String baseTopic = "filamentsensor1";
+const String baseTopic = "filamentsensor5";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
-const String presTopic = baseTopic + "/" + "pressure";
 const String vccTopic  = baseTopic + "/" + "vcc";
 const String fwTopic   = baseTopic + "/" + "firmwarever";
 
 
 char temperature[10];
 char humidity[10];
-char pressure[10];
 char vcc[10];
 
 IPAddress ip;
 
 WiFiClient WiFiClient;
 PubSubClient mqttclient(WiFiClient);
-BME280 bmeSensor; //Global sensor object
+Adafruit_Si7021 sensor = Adafruit_Si7021();
 
 
 ADC_MODE(ADC_VCC);
 
 void setup() {
 
-  pinMode(BMEPWRPIN, OUTPUT);
+  pinMode(sensorPowerPin, OUTPUT);
   Serial.begin(115200);
 
   Serial.println("Waking up to send data to MQTT server...");
-
-  bmeSensor.settings.commInterface = I2C_MODE;
-  bmeSensor.settings.I2CAddress = 0x76;
-  bmeSensor.settings.tempOverSample = 1;
-  bmeSensor.settings.humidOverSample = 1;
-
-  Wire.begin(4, 5);
-  //Wire.setClock(400000); //Increase to fast I2C speed!
   Serial.println("Searching for sensors");
 
-  digitalWrite(BMEPWRPIN, HIGH);
-  delay(30); // allow sensor to start ~10ms plus 20ms buffer
-  if (!bmeSensor.begin()) {
-    Serial.println("Could not find a valid BME280 sensor, check wiring!");
+  digitalWrite(sensorPowerPin, HIGH);
+  delay(120); // allow sensor to start ~100ms plus 20ms buffer
+  if (!sensor.begin()) {
+    Serial.println("Could not find a valid SI7021 sensor, check wiring!");
     while (1);
   }
-  bmeSensor.setMode(MODE_SLEEP); //Sleep for now
-  delay(6000); // allow things to settle
-
+  delay(350); // allow sensor and power to settle
+  
+  WiFi.hostname(baseTopic);
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
   mqttclient.setServer(mqtt_server, MQTT_PORT);
@@ -71,19 +61,10 @@ void setup() {
 
 void loop() {
 
-  Serial.println("Reading BME data...");
-  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
-  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
-  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
-  bmeSensorRead();
-  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
-  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
-  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
-  bmeSensorRead();
-  bmeSensor.setMode(MODE_FORCED); //Wake up sensor and take reading
-  while (bmeSensor.isMeasuring() == false) ; //Wait for sensor to start measurment
-  while (bmeSensor.isMeasuring() == true) ; //Hang out while sensor completes the reading
-  bmeSensorRead();
+  Serial.println("Reading sensor data...");
+  sensorRead();
+  sensorRead();
+  sensorRead();
   Serial.println("Reading VCC from ESP...");
   vccRead();
 
@@ -122,14 +103,6 @@ void loop() {
   Serial.println(mqttRetValue);
 
   Serial.print("Topic: ");
-  Serial.println(presTopic);
-  Serial.print("Sending pressure value: ");
-  Serial.println(pressure);
-  mqttRetValue = mqttclient.publish(presTopic.c_str(), pressure);
-  Serial.print("Pressure return value: ");
-  Serial.println(mqttRetValue);
-
-  Serial.print("Topic: ");
   Serial.println(vccTopic);
   Serial.print("Sending vcc value: ");
   Serial.println(vcc);
@@ -150,7 +123,7 @@ void loop() {
   WiFi.forceSleepBegin();
 
   Serial.println("Going to sleep now!");
-  ESP.deepSleep(sleepTimeSeconds * 1000000);
+  ESP.deepSleep(sleepTimeSeconds * 1000000); // put the esp into deep sleep mode for 1 hour
 
   // infinite loop to run for approx ~100ms while the deepsleep command completes
   // we don't want any code running after the deep sleep or for the loop to iterate again
@@ -199,14 +172,12 @@ void vccRead() {
   dtostrf(v, 5, 2, vcc);
 }
 
-void bmeSensorRead() {
-  float h = bmeSensor.readFloatHumidity();
-  float t = bmeSensor.readTempF();
-  float p = bmeSensor.readFloatPressure();
-
-  dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals (BME's are really accurate)
-  dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals (BME's are really accurate)
-  dtostrf(p, 5, 2, pressure);     // 5 chars total, 2 decimals (BME's are really accurate)
+void sensorRead() {
+  float h = sensor.readHumidity();
+  float t = ( (sensor.readTemperature() * 1.8) + 32); // converted to F from C
+  
+  dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals
+  dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals
 }
 
 
