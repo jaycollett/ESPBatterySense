@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.2.0">
+<eagle version="9.2.2">
 <drawing>
 <settings>
-<setting alwaysvectorfont="no"/>
+<setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
@@ -8710,52 +8710,52 @@ CONN_05
 <text x="240.792" y="6.858" size="3.81" layer="94">2.1</text>
 </plain>
 <instances>
-<instance part="_" gate="G$1" x="63.5" y="139.7"/>
-<instance part="LOGO1" gate="G$1" x="134.62" y="12.7"/>
-<instance part="BATT" gate="G$1" x="33.02" y="170.18">
+<instance part="_" gate="G$1" x="63.5" y="139.7" smashed="yes"/>
+<instance part="LOGO1" gate="G$1" x="134.62" y="12.7" smashed="yes"/>
+<instance part="BATT" gate="G$1" x="33.02" y="170.18" smashed="yes">
 <attribute name="NAME" x="26.67" y="175.895" size="1.778" layer="95"/>
 <attribute name="VALUE" x="26.67" y="165.1" size="1.778" layer="96"/>
 </instance>
-<instance part="R1" gate="G$1" x="27.94" y="83.82" rot="R90">
+<instance part="R1" gate="G$1" x="27.94" y="83.82" smashed="yes" rot="R90">
 <attribute name="NAME" x="26.4414" y="80.01" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="31.242" y="80.01" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="R2" gate="G$1" x="40.64" y="83.82" rot="R90">
+<instance part="R2" gate="G$1" x="40.64" y="83.82" smashed="yes" rot="R90">
 <attribute name="NAME" x="39.1414" y="80.01" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="43.942" y="80.01" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="R3" gate="G$1" x="50.8" y="83.82" rot="R90">
+<instance part="R3" gate="G$1" x="50.8" y="83.82" smashed="yes" rot="R90">
 <attribute name="NAME" x="49.3014" y="80.01" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="54.102" y="80.01" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="GND1" gate="1" x="50.8" y="63.5">
+<instance part="GND1" gate="1" x="50.8" y="63.5" smashed="yes">
 <attribute name="VALUE" x="50.8" y="63.246" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="U2" gate="G$1" x="134.62" y="106.68">
+<instance part="U2" gate="G$1" x="134.62" y="106.68" smashed="yes">
 <attribute name="NAME" x="124.46" y="119.38" size="1.27" layer="95"/>
 <attribute name="VALUE" x="124.46" y="93.98" size="1.27" layer="96"/>
 </instance>
-<instance part="C1" gate="G$1" x="111.76" y="104.14">
+<instance part="C1" gate="G$1" x="111.76" y="104.14" smashed="yes">
 <attribute name="NAME" x="109.47" y="105.39" size="1.27" layer="95" font="vector" rot="R90" align="center"/>
 <attribute name="VALUE" x="114.06" y="105.39" size="1.27" layer="96" font="vector" rot="R90" align="center"/>
 </instance>
-<instance part="U$2" gate="G$1" x="111.76" y="93.98">
+<instance part="U$2" gate="G$1" x="111.76" y="93.98" smashed="yes">
 <attribute name="VALUE" x="110.236" y="91.44" size="1.27" layer="96"/>
 </instance>
-<instance part="R4" gate="G$1" x="160.02" y="114.3" rot="R90">
+<instance part="R4" gate="G$1" x="160.02" y="114.3" smashed="yes" rot="R90">
 <attribute name="NAME" x="158.5214" y="110.49" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="163.322" y="110.49" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="R5" gate="G$1" x="170.18" y="109.22" rot="R90">
+<instance part="R5" gate="G$1" x="170.18" y="109.22" smashed="yes" rot="R90">
 <attribute name="NAME" x="168.6814" y="105.41" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="173.482" y="105.41" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="PRG" gate="G$1" x="86.36" y="76.2">
+<instance part="PRG" gate="G$1" x="86.36" y="76.2" smashed="yes">
 <attribute name="VALUE" x="83.82" y="66.294" size="1.778" layer="96" font="vector"/>
 <attribute name="NAME" x="83.82" y="84.328" size="1.778" layer="95" font="vector"/>
 </instance>
-<instance part="FRAME1" gate="G$1" x="-22.86" y="0"/>
-<instance part="FRAME1" gate="G$2" x="149.86" y="0">
+<instance part="FRAME1" gate="G$1" x="-22.86" y="0" smashed="yes"/>
+<instance part="FRAME1" gate="G$2" x="149.86" y="0" smashed="yes">
 <attribute name="LAST_DATE_TIME" x="162.56" y="1.27" size="2.54" layer="94"/>
 <attribute name="SHEET" x="236.22" y="1.27" size="2.54" layer="94"/>
 <attribute name="DRAWING_NAME" x="167.64" y="19.05" size="2.54" layer="94"/>
@@ -8789,6 +8789,17 @@ CONN_05
 <pinref part="PRG" gate="G$1" pin="1"/>
 <wire x1="93.98" y1="71.12" x2="109.22" y2="71.12" width="0.1524" layer="91"/>
 <label x="104.14" y="71.12" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="R4" gate="G$1" pin="2"/>
+<wire x1="160.02" y1="119.38" x2="160.02" y2="124.46" width="0.1524" layer="91"/>
+<pinref part="R5" gate="G$1" pin="2"/>
+<wire x1="160.02" y1="124.46" x2="165.1" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="165.1" y1="124.46" x2="170.18" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="170.18" y1="124.46" x2="170.18" y2="114.3" width="0.1524" layer="91"/>
+<wire x1="165.1" y1="124.46" x2="165.1" y2="137.16" width="0.1524" layer="91"/>
+<junction x="165.1" y="124.46"/>
+<label x="163.83" y="127" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -8960,17 +8971,6 @@ CONN_05
 <pinref part="_" gate="G$1" pin="GPIO12"/>
 <wire x1="45.72" y1="132.08" x2="30.48" y2="132.08" width="0.1524" layer="91"/>
 <label x="30.48" y="132.08" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="R4" gate="G$1" pin="2"/>
-<wire x1="160.02" y1="119.38" x2="160.02" y2="124.46" width="0.1524" layer="91"/>
-<pinref part="R5" gate="G$1" pin="2"/>
-<wire x1="160.02" y1="124.46" x2="165.1" y2="124.46" width="0.1524" layer="91"/>
-<wire x1="165.1" y1="124.46" x2="170.18" y2="124.46" width="0.1524" layer="91"/>
-<wire x1="170.18" y1="124.46" x2="170.18" y2="114.3" width="0.1524" layer="91"/>
-<wire x1="165.1" y1="124.46" x2="165.1" y2="137.16" width="0.1524" layer="91"/>
-<junction x="165.1" y="124.46"/>
-<label x="163.83" y="127" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 </nets>
