@@ -16,7 +16,7 @@ Unfortunately, this design requires a reflow solution as the SI7021 is not somet
 7. [JST connector](https://www.digikey.com/product-detail/en/jst-sales-america-inc/S2B-PH-K-S%28LF%29%28SN%29/455-1719-ND/926626) for battery
 7. Battery (any ~3.3V battery source, I'm using 2 alkaline AA batteries)
 8. Optional header for programming and debug pins
-9. Enclosure of some sort (once I finalize my battery size, I'll upload a 3D printable enclosure)
+9. Enclosure of some sort (my very basic design is [here](https://www.thingiverse.com/thing:3371715)
 #
 
 
