@@ -179,5 +179,3 @@ void sensorRead() {
   dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals
   dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals
 }
-
-
