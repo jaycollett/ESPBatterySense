@@ -1,6 +1,6 @@
 
 # ESPBatterySense
-<img align="right" src="https://www.jaycollett.com/wp-content/uploads/2019/01/espboards-300x300.jpg" style="float: right;">
+<img align="right" src="https://www.jaycollett.com/wp-content/uploads/2019/01/espboards.jpg" style="float: right;">
 
 This project was inspired by my desire to track the humidity, and to a much lesser degree, the temperature inside the storage solution for my 3D printing filament. To goal was to have a device that is battery operated, lasts several months (if not longer) before needing to recharge or replace batteries, and capable of transmitting to my MQTT broker for display and graphing in HASS.IO. I've been working a lot with ESP-based projects and love the the simplicity of the ESP. In this project, which is a varition of the the original that made use of a BME280 sensor, I've moved to a SI7021-A20 IC that is not a seprate daughter-board which I like better. The SI7021-A20 is a great solution for me as it's easily and affordably sourced, well documented, easy to reflow solder in my homemade solution, and has great accuracy.
 
