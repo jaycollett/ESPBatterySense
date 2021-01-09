@@ -22,4 +22,4 @@ Unfortunately, this design requires a reflow solution as the SI7021 is not somet
 #
 
 
-[![Travis](https://img.shields.io/travis/jaycollett/ESPBatterySense.svg?style=for-the-badge)](https://travis-ci.org/jaycollett/ESPBatterySense) [![license](https://img.shields.io/github/license/jaycollett/ESPBatterySense.svg?style=for-the-badge)](https://github.com/jaycollett/ESPBatterySense/blob/master/LICENSE)
+[![Travis](https://img.shields.io/travis/jaycollett/ESPBatterySense.svg?style=for-the-badge)](https://travis-ci.com/github/jaycollett) [![license](https://img.shields.io/github/license/jaycollett/ESPBatterySense.svg?style=for-the-badge)](https://travis-ci.com/github/jaycollett/blob/master/LICENSE)
