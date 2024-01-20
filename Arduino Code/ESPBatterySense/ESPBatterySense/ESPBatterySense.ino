@@ -2,6 +2,18 @@
 #include <PubSubClient.h>
 #include "Adafruit_Si7021.h"
 
+//#define DEBUG
+
+// Setup our debug printing
+#ifdef DEBUG
+  #define debug(x)     Serial.print(x)
+  #define debugln(x)   Serial.println(x)
+#else
+  #define debug(x)     // define empty, so macro does nothing
+  #define debugln(x)
+#endif
+
+
 
 #define sensorPowerPin 12
 
@@ -9,20 +21,19 @@
 #define WIFI_PASS "xxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "v2.1";                  // firmware version of this sensor
+char  fmversion[7] = "v2.7";                  // firmware version of this sensor
 char  mqtt_server[] = "192.168.0.x";          // MQTT broker IP address
 char  mqtt_username[] = "xxxxxxxxxxxxxxx";    // username for MQTT broker (USE ONE)
 char  mqtt_password[] = "xxxxxxxxxxxxx";    // password for MQTT broker
-char  mqtt_clientid[] = "filamentsensor5";    // client id for connections to MQTT broker
+char  mqtt_clientid[] = "tempHumSensor1";    // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 
-const String baseTopic = "filamentsensor5";
+const String baseTopic = "tempHumSensor1";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
 const String vccTopic  = baseTopic + "/" + "vcc";
 const String fwTopic   = baseTopic + "/" + "firmwarever";
-
 
 char temperature[10];
 char humidity[10];
@@ -40,15 +51,19 @@ ADC_MODE(ADC_VCC);
 void setup() {
 
   pinMode(sensorPowerPin, OUTPUT);
-  Serial.begin(115200);
 
-  Serial.println("Waking up to send data to MQTT server...");
-  Serial.println("Searching for sensors");
+  // only need serial if we are in debug mode...
+  #ifdef DEBUG
+    Serial.begin(115200);
+  #endif
+  
+  debugln("Waking up to send data to MQTT server...");
+  debugln("Searching for sensors");
 
   digitalWrite(sensorPowerPin, HIGH);
-  delay(120); // allow sensor to start ~100ms plus 20ms buffer
+  delay(125); // allow sensor to start ~100ms plus 20ms buffer
   if (!sensor.begin()) {
-    Serial.println("Could not find a valid SI7021 sensor, check wiring!");
+    debugln("Could not find a valid SI7021 sensor, check wiring!");
     while (1);
   }
   delay(350); // allow sensor and power to settle
@@ -61,11 +76,13 @@ void setup() {
 
 void loop() {
 
-  Serial.println("Reading sensor data...");
+  debugln("Reading sensor data...");
   sensorRead();
+  delay(75);
   sensorRead();
+  delay(75);
   sensorRead();
-  Serial.println("Reading VCC from ESP...");
+  debugln("Reading VCC from ESP...");
   vccRead();
 
   int mqttRetValue;
@@ -74,55 +91,55 @@ void loop() {
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
-    Serial.print(".");
+    debug(".");
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  debugln("");
+  debugln("WiFi connected");
+  debugln("IP address: ");
+  debugln(WiFi.localIP());
 
-  Serial.println("Calling MQTT Connect");
+  debugln("Calling MQTT Connect");
   MQTT_connect(); // connect to wifi/mqtt as needed
-  Serial.println("Pushing data to MQTT server");
+  debugln("Pushing data to MQTT server");
 
-  Serial.print("Topic: ");
-  Serial.println(tempTopic);
-  Serial.print("Sending temp value: ");
-  Serial.println(temperature);
+  debug("Topic: ");
+  debugln(tempTopic);
+  debug("Sending temp value: ");
+  debugln(temperature);
   mqttRetValue = mqttclient.publish(tempTopic.c_str(), temperature);
-  Serial.print("Temp return value: ");
-  Serial.println(mqttRetValue);
+  debug("Temp return value: ");
+  debugln(mqttRetValue);
 
-  Serial.print("Topic: ");
-  Serial.println(humiTopic);
-  Serial.print("Sending humidity value: ");
-  Serial.println(humidity);
+  debug("Topic: ");
+  debugln(humiTopic);
+  debug("Sending humidity value: ");
+  debugln(humidity);
   mqttRetValue = mqttclient.publish(humiTopic.c_str(), humidity);
-  Serial.print("Humidity return value: ");
-  Serial.println(mqttRetValue);
+  debug("Humidity return value: ");
+  debugln(mqttRetValue);
 
-  Serial.print("Topic: ");
-  Serial.println(vccTopic);
-  Serial.print("Sending vcc value: ");
-  Serial.println(vcc);
+  debug("Topic: ");
+  debugln(vccTopic);
+  debug("Sending vcc value: ");
+  debugln(vcc);
   mqttRetValue = mqttclient.publish(vccTopic.c_str(), vcc);
-  Serial.print("VCC return value: ");
-  Serial.println(mqttRetValue);
+  debug("VCC return value: ");
+  debugln(mqttRetValue);
 
-  Serial.print("Topic: ");
-  Serial.println(fwTopic);
-  Serial.print("Sending fw version value: ");
-  Serial.println(fmversion);
+  debug("Topic: ");
+  debugln(fwTopic);
+  debug("Sending fw version value: ");
+  debugln(fmversion);
   mqttRetValue = mqttclient.publish(fwTopic.c_str(), fmversion);
-  Serial.print("firmware ver return value: ");
-  Serial.println(mqttRetValue);
+  debug("firmware ver return value: ");
+  debugln(mqttRetValue);
 
   yield();
   delay(1500); // yield and delay, if we go to sleep too quickly the mqtt message never gets processed
   WiFi.forceSleepBegin();
 
-  Serial.println("Going to sleep now!");
+  debugln("Going to sleep now!");
   ESP.deepSleep(sleepTimeSeconds * 1000000); // put the esp into deep sleep mode for 1 hour
 
   // infinite loop to run for approx ~100ms while the deepsleep command completes
@@ -148,23 +165,23 @@ void MQTT_connect() {
     return;
   }
 
-  Serial.print("Connecting to MQTT... ");
+  debug("Connecting to MQTT... ");
 
   // Loop until we're reconnected
   while (!mqttclient.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    debug("Attempting MQTT connection...");
     // Attempt to connect
     if (mqttclient.connect(mqtt_clientid, mqtt_username, mqtt_password)) {
-      Serial.println("connected");
+      debugln("connected");
     } else {
-      Serial.print("failed, rc=");
-      Serial.print(mqttclient.state());
-      Serial.println(" try again in 2 seconds");
-      // Wait 2 seconds before retrying
-      delay(2000);
+      debug("failed, rc=");
+      debug(mqttclient.state());
+      debugln(" try again in 1 seconds");
+      // Wait 1 second before retrying
+      delay(1000);
     }
   }
-  Serial.println("MQTT Connected!");
+  debugln("MQTT Connected!");
 }
 
 void vccRead() {
@@ -173,6 +190,7 @@ void vccRead() {
 }
 
 void sensorRead() {
+  
   float h = sensor.readHumidity();
   float t = ( (sensor.readTemperature() * 1.8) + 32); // converted to F from C
   
