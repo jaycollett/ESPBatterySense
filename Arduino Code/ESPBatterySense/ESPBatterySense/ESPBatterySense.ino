@@ -17,15 +17,15 @@
 
 #define sensorPowerPin 12
 
-#define WIFI_SSID "xxxxxxxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "v2.7";                  // firmware version of this sensor
+char  fmversion[7] = "2.7";                   // firmware version of this sensor
 char  mqtt_server[] = "192.168.0.x";          // MQTT broker IP address
-char  mqtt_username[] = "xxxxxxxxxxxxxxx";    // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxxx";    // password for MQTT broker
-char  mqtt_clientid[] = "tempHumSensor1";    // client id for connections to MQTT broker
+char  mqtt_username[] = "xxxxxxxxxx";         // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "xxxxxxxxxxxx";       // password for MQTT broker
+char  mqtt_clientid[] = "tempHumSensor1";     // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 
