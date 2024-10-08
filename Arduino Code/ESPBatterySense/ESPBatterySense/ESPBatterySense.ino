@@ -17,19 +17,20 @@
 
 #define sensorPowerPin 12
 
-#define WIFI_SSID "xxxxxxxxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxxxxxx"
+#define WIFI_SSID "GoofWiFi_IOT"
+#define WIFI_PASS "GoofI0TPw032a6!"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "2.7";                   // firmware version of this sensor
-char  mqtt_server[] = "192.168.0.x";          // MQTT broker IP address
-char  mqtt_username[] = "xxxxxxxxxx";         // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxx";       // password for MQTT broker
-char  mqtt_clientid[] = "tempHumSensor1";     // client id for connections to MQTT broker
+char  fmversion[7] = "2.8";                   // firmware version of this sensor
+char  mqtt_server[] = "192.168.0.5";          // MQTT broker IP address
+char  mqtt_username[] = "mqtt_user_collett";         // username for MQTT broker (USE ONE)
+char  mqtt_password[] = "gabriel03ana08";       // password for MQTT broker
+char  mqtt_clientid[] = "tempHumSensor4";     // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
+const unsigned int connectionAttempts = 12;   // number of attempts to connect to wifi before sleeping
 
-const String baseTopic = "tempHumSensor1";
+const String baseTopic = "tempHumSensor4";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
 const String vccTopic  = baseTopic + "/" + "vcc";
@@ -89,9 +90,25 @@ void loop() {
   WiFi.forceSleepWake();
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(250);
-    debug(".");
+  unsigned int wifiTry = 0;
+  while ( (WiFi.status() != WL_CONNECTED) && (wifiTry < connectionAttempts) ) {
+    delay(500);
+    debugln("WiFi not connected, attempting reconnect...");
+    wifiTry++;
+  }
+
+  // tried to connect to wifi, if it worked, run the code, else go to sleep and try again later
+  if(WiFi.status() != WL_CONNECTED){
+    WiFi.forceSleepBegin();
+
+    debugln("Going to sleep now, we couldn't connect to WiFi!");
+    ESP.deepSleep(sleepTimeSeconds * 1000000); // put the esp into deep sleep mode for 1 hour
+
+    // infinite loop to run for approx ~100ms while the deepsleep command completes
+    // we don't want any code running after the deep sleep or for the loop to iterate again
+    while (true) {
+      delay(50);
+    }
   }
 
   debugln("");
