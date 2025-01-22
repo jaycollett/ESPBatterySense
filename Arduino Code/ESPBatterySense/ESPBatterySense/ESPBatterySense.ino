@@ -13,62 +13,83 @@
   #define debugln(x)
 #endif
 
-
-
 #define sensorPowerPin 12
 
 #define WIFI_SSID "xxxxxxxxxxxxxxx"
 #define WIFI_PASS "xxxxxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "2.9";                   // firmware version of this sensor
-char  mqtt_server[] = "xxxxxxxxxxx";          // MQTT broker IP address
-char  mqtt_username[] = "bmesensors";         // username for MQTT broker (USE ONE)
-char  mqtt_password[] = "xxxxxxxxxxxx";       // password for MQTT broker
-char  mqtt_clientid[] = "tempHumSensor1";     // client id for connections to MQTT broker
+char fmversion[7] = "3.1";                   // Firmware version of this sensor
+char mqtt_server[] = "xxxxxxxxxxx";          // MQTT broker IP address
+char mqtt_username[] = "bmesensors";         // Username for MQTT broker
+char mqtt_password[] = "xxxxxxxxxxxx";       // Password for MQTT broker
+char mqtt_clientid[30];                       // Client ID for connections to MQTT broker
 
-const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
-const unsigned int connectionAttempts = 12;   // number of attempts to connect to wifi before sleeping
+const unsigned int sleepTimeSeconds = 3600;   // Deep sleep for 3600 seconds (1 hour)
+const unsigned int connectionAttempts = 12;   // Max attempts to connect to WiFi before sleeping
 
-const String baseTopic = "bmesensors/tempHumSensor1";
-const String tempTopic = baseTopic + "/" + "temperature";
-const String humiTopic = baseTopic + "/" + "humidity";
-const String vccTopic  = baseTopic + "/" + "vcc";
-const String fwTopic   = baseTopic + "/" + "firmwarever";
+String baseTopic;
+String tempTopic;
+String humiTopic;
+String vccTopic;
+String fwTopic;
+String batteryCapacityTopic;
 
 char temperature[10];
+char batteryCapacity[10];
 char humidity[10];
 char vcc[10];
-
-IPAddress ip;
 
 WiFiClient WiFiClient;
 PubSubClient mqttclient(WiFiClient);
 Adafruit_Si7021 sensor = Adafruit_Si7021();
 
-
 ADC_MODE(ADC_VCC);
 
 void setup() {
+  // Generate the unique baseTopic using the chip ID
+  String chipID = String(ESP.getChipId(), HEX); // Convert chip ID to hexadecimal
+  chipID.toUpperCase(); // Convert to uppercase for consistency
+  baseTopic = "bmesensors/sensor-" + chipID;
 
+  // Recompute the derived MQTT topics
+  tempTopic = baseTopic + "/temperature";
+  humiTopic = baseTopic + "/humidity";
+  vccTopic  = baseTopic + "/vcc";
+  fwTopic   = baseTopic + "/firmwarever";
+
+  // Update the MQTT client ID
+  snprintf(mqtt_clientid, sizeof(mqtt_clientid), "sensor-%s", chipID.c_str());
+
+  // Configure the sensor power pin as output
   pinMode(sensorPowerPin, OUTPUT);
 
-  // only need serial if we are in debug mode...
   #ifdef DEBUG
     Serial.begin(115200);
   #endif
-  
+
   debugln("Waking up to send data to MQTT server...");
   debugln("Searching for sensors");
 
+  // Power on the sensor and initialize
   digitalWrite(sensorPowerPin, HIGH);
-  delay(125); // allow sensor to start ~100ms plus 20ms buffer
+  delay(125); // Allow sensor to start ~100ms plus 20ms buffer
   if (!sensor.begin()) {
     debugln("Could not find a valid SI7021 sensor, check wiring!");
     while (1);
   }
-  delay(350); // allow sensor and power to settle
-  
+  delay(350); // Allow sensor and power to settle
+
+  // Log the dynamic topics for debugging
+  batteryCapacityTopic = baseTopic + "/batterycapacity";
+  debugln("Base Topic: " + baseTopic);
+  debugln("Temperature Topic: " + tempTopic);
+  debugln("Humidity Topic: " + humiTopic);
+  debugln("VCC Topic: " + vccTopic);
+  debugln("Firmware Topic: " + fwTopic);
+  debugln("Battery Capacity Topic: " + batteryCapacityTopic);
+
+  // Set up WiFi and MQTT client
   WiFi.hostname(baseTopic);
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
@@ -76,13 +97,9 @@ void setup() {
 }
 
 void loop() {
-
   debugln("Reading sensor data...");
   sensorRead();
   delay(75);
-  sensorRead();
-  delay(75);
-  sensorRead();
   debugln("Reading VCC from ESP...");
   vccRead();
 
@@ -91,33 +108,28 @@ void loop() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   unsigned int wifiTry = 0;
-  while ( (WiFi.status() != WL_CONNECTED) && (wifiTry < connectionAttempts) ) {
+  while ((WiFi.status() != WL_CONNECTED) && (wifiTry < connectionAttempts)) {
     delay(500);
     debugln("WiFi not connected, attempting reconnect...");
     wifiTry++;
   }
 
-  // tried to connect to wifi, if it worked, run the code, else go to sleep and try again later
-  if(WiFi.status() != WL_CONNECTED){
+  // If WiFi connection failed, go to deep sleep
+  if (WiFi.status() != WL_CONNECTED) {
     WiFi.forceSleepBegin();
-
     debugln("Going to sleep now, we couldn't connect to WiFi!");
-    ESP.deepSleep(sleepTimeSeconds * 1000000); // put the esp into deep sleep mode for 1 hour
-
-    // infinite loop to run for approx ~100ms while the deepsleep command completes
-    // we don't want any code running after the deep sleep or for the loop to iterate again
+    ESP.deepSleep(sleepTimeSeconds * 1000000);
     while (true) {
       delay(50);
     }
   }
 
-  debugln("");
   debugln("WiFi connected");
   debugln("IP address: ");
   debugln(WiFi.localIP());
 
   debugln("Calling MQTT Connect");
-  MQTT_connect(); // connect to wifi/mqtt as needed
+  MQTT_connect();
   debugln("Pushing data to MQTT server");
 
   debug("Topic: ");
@@ -146,55 +158,46 @@ void loop() {
 
   debug("Topic: ");
   debugln(fwTopic);
-  debug("Sending fw version value: ");
+  debug("Sending firmware version: ");
   debugln(fmversion);
   mqttRetValue = mqttclient.publish(fwTopic.c_str(), fmversion);
-  debug("firmware ver return value: ");
+  debug("Firmware ver return value: ");
+  debugln(mqttRetValue);
+
+  debug("Topic: ");
+  debugln(batteryCapacityTopic);
+  debug("Sending battery capacity: ");
+  debugln(batteryCapacity);
+  mqttRetValue = mqttclient.publish(batteryCapacityTopic.c_str(), batteryCapacity);
+  debug("Battery capacity return value: ");
   debugln(mqttRetValue);
 
   yield();
-  delay(1500); // yield and delay, if we go to sleep too quickly the mqtt message never gets processed
+  delay(1500); // Allow MQTT message to be processed before sleeping
   WiFi.forceSleepBegin();
 
   debugln("Going to sleep now!");
-  ESP.deepSleep(sleepTimeSeconds * 1000000); // put the esp into deep sleep mode for 1 hour
-
-  // infinite loop to run for approx ~100ms while the deepsleep command completes
-  // we don't want any code running after the deep sleep or for the loop to iterate again
+  ESP.deepSleep(sleepTimeSeconds * 1000000);
   while (true) {
     delay(50);
   }
 }
 
-
-
-// #############################################################################
-//  mqtt Connect function
-//  This function connects and reconnects as necessary to the MQTT server and
-//  WiFi.
-//  Should be called in the loop to ensure connectivity
-// #############################################################################
 void MQTT_connect() {
-  int8_t ret;
-
-  // Stop if already connected.
+  // Stop if already connected
   if (mqttclient.connected()) {
     return;
   }
 
   debug("Connecting to MQTT... ");
-
-  // Loop until we're reconnected
   while (!mqttclient.connected()) {
     debug("Attempting MQTT connection...");
-    // Attempt to connect
     if (mqttclient.connect(mqtt_clientid, mqtt_username, mqtt_password)) {
       debugln("connected");
     } else {
       debug("failed, rc=");
       debug(mqttclient.state());
-      debugln(" try again in 1 seconds");
-      // Wait 1 second before retrying
+      debugln(" try again in 1 second");
       delay(1000);
     }
   }
@@ -202,15 +205,29 @@ void MQTT_connect() {
 }
 
 void vccRead() {
-  float v  = ESP.getVcc() / 1000.0;
-  dtostrf(v, 5, 2, vcc);
+  float v = ESP.getVcc() / 1000.0; // Convert to volts
+  dtostrf(v, 5, 2, vcc);          // Format voltage as string
+  CalculateBatteryPercentage(v);
+}
+
+void CalculateBatteryPercentage(float voltage) {
+  int percentage;
+
+  if (voltage <= 2.5) {
+    percentage = 0;  // Below or equal to 2.5V is 0%
+  } else if (voltage >= 3.0) {
+    percentage = 100;  // At or above 3.0V is 100%
+  } else {
+    // Linear interpolation between 2.5V and 3.0V
+    percentage = ((voltage - 2.5) / 0.5) * 100;
+  }
+
+  snprintf(batteryCapacity, sizeof(batteryCapacity), "%d", percentage);
 }
 
 void sensorRead() {
-  
   float h = sensor.readHumidity();
-  float t = ( (sensor.readTemperature() * 1.8) + 32); // converted to F from C
-  
-  dtostrf(t, 5, 2, temperature);  // 5 chars total, 2 decimals
-  dtostrf(h, 5, 2, humidity);     // 5 chars total, 2 decimals
+  float t = (sensor.readTemperature() * 1.8) + 32; // Convert to Fahrenheit
+  dtostrf(t, 5, 2, temperature);  // Format temperature as string
+  dtostrf(h, 5, 2, humidity);     // Format humidity as string
 }
