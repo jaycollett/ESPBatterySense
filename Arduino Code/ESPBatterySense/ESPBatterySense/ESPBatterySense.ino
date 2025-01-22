@@ -26,7 +26,7 @@ char mqtt_password[] = "xxxxxxxxxxxx";       // Password for MQTT broker
 char mqtt_clientid[30];                       // Client ID for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // Deep sleep for 3600 seconds (1 hour)
-const unsigned int connectionAttempts = 12;   // Max attempts to connect to WiFi before sleeping
+const unsigned int connectionAttempts = 10;   // Max attempts to connect to WiFi before sleeping
 
 String baseTopic;
 String tempTopic;
@@ -73,11 +73,18 @@ void setup() {
 
   // Power on the sensor and initialize
   digitalWrite(sensorPowerPin, HIGH);
-  delay(125); // Allow sensor to start ~100ms plus 20ms buffer
-  if (!sensor.begin()) {
-    debugln("Could not find a valid SI7021 sensor, check wiring!");
-    while (1);
+  delay(100); // Allow sensor to start ~100ms
+  int sensorRetry = 0;
+  while (!sensor.begin() && sensorRetry < 3) {
+    debugln("Sensor not detected. Retrying...");
+    delay(100);
+    sensorRetry++;
   }
+  if (sensorRetry >= 3) {
+    debugln("Sensor initialization failed after 3 attempts. Going to sleep.");
+    ESP.deepSleep(sleepTimeSeconds * 1000000);
+  }
+  
   delay(350); // Allow sensor and power to settle
 
   // Log the dynamic topics for debugging
@@ -97,19 +104,13 @@ void setup() {
 }
 
 void loop() {
-  debugln("Reading sensor data...");
-  sensorRead();
-  delay(75);
-  debugln("Reading VCC from ESP...");
-  vccRead();
 
-  int mqttRetValue;
   WiFi.forceSleepWake();
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   unsigned int wifiTry = 0;
   while ((WiFi.status() != WL_CONNECTED) && (wifiTry < connectionAttempts)) {
-    delay(500);
+    delay(5000);
     debugln("WiFi not connected, attempting reconnect...");
     wifiTry++;
   }
@@ -124,6 +125,14 @@ void loop() {
     }
   }
 
+  debugln("Reading sensor data...");
+  sensorRead();
+  delay(75);
+  debugln("Reading VCC from ESP...");
+  vccRead();
+
+  int mqttRetValue;
+
   debugln("WiFi connected");
   debugln("IP address: ");
   debugln(WiFi.localIP());
@@ -132,44 +141,16 @@ void loop() {
   MQTT_connect();
   debugln("Pushing data to MQTT server");
 
-  debug("Topic: ");
-  debugln(tempTopic);
-  debug("Sending temp value: ");
-  debugln(temperature);
-  mqttRetValue = mqttclient.publish(tempTopic.c_str(), temperature);
-  debug("Temp return value: ");
-  debugln(mqttRetValue);
+  // Consolidated MQTT publish payload in JSON format
+  char mqttPayload[256];
+  snprintf(mqttPayload, sizeof(mqttPayload),
+          "{\"temperature\": \"%s\", \"humidity\": \"%s\", \"vcc\": \"%s\", \"firmware\": \"%s\", \"battery\": \"%s\"}",
+          temperature, humidity, vcc, fmversion, batteryCapacity);
 
-  debug("Topic: ");
-  debugln(humiTopic);
-  debug("Sending humidity value: ");
-  debugln(humidity);
-  mqttRetValue = mqttclient.publish(humiTopic.c_str(), humidity);
-  debug("Humidity return value: ");
-  debugln(mqttRetValue);
-
-  debug("Topic: ");
-  debugln(vccTopic);
-  debug("Sending vcc value: ");
-  debugln(vcc);
-  mqttRetValue = mqttclient.publish(vccTopic.c_str(), vcc);
-  debug("VCC return value: ");
-  debugln(mqttRetValue);
-
-  debug("Topic: ");
-  debugln(fwTopic);
-  debug("Sending firmware version: ");
-  debugln(fmversion);
-  mqttRetValue = mqttclient.publish(fwTopic.c_str(), fmversion);
-  debug("Firmware ver return value: ");
-  debugln(mqttRetValue);
-
-  debug("Topic: ");
-  debugln(batteryCapacityTopic);
-  debug("Sending battery capacity: ");
-  debugln(batteryCapacity);
-  mqttRetValue = mqttclient.publish(batteryCapacityTopic.c_str(), batteryCapacity);
-  debug("Battery capacity return value: ");
+  debug("Publishing JSON Payload: ");
+  debugln(mqttPayload);
+  mqttRetValue = mqttclient.publish(baseTopic.c_str(), mqttPayload);
+  debug("Publish return value: ");
   debugln(mqttRetValue);
 
   yield();
@@ -184,24 +165,31 @@ void loop() {
 }
 
 void MQTT_connect() {
-  // Stop if already connected
   if (mqttclient.connected()) {
     return;
   }
 
   debug("Connecting to MQTT... ");
-  while (!mqttclient.connected()) {
+  int retryCount = 0;
+  const int maxRetries = 10;
+
+  while (!mqttclient.connected() && retryCount < maxRetries) {
     debug("Attempting MQTT connection...");
     if (mqttclient.connect(mqtt_clientid, mqtt_username, mqtt_password)) {
       debugln("connected");
     } else {
+      retryCount++;
       debug("failed, rc=");
       debug(mqttclient.state());
       debugln(" try again in 1 second");
       delay(1000);
     }
   }
-  debugln("MQTT Connected!");
+
+  if (retryCount >= maxRetries) {
+    debugln("MQTT connection failed after maximum retries. Sleeping...");
+    ESP.deepSleep(sleepTimeSeconds * 1000000);
+  }
 }
 
 void vccRead() {
