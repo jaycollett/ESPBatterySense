@@ -19,7 +19,7 @@
 #define WIFI_PASS "xxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char fmversion[7] = "3.1";                   // Firmware version of this sensor
+char fmversion[7] = "3.2";                   // Firmware version of this sensor
 char mqtt_server[] = "192.16xxxxx";          // MQTT broker IP address
 char mqtt_username[] = "xxxxxxxxxx";         // Username for MQTT broker
 char mqtt_password[] = "xxxxxxxxxxxx";       // Password for MQTT broker
@@ -194,7 +194,7 @@ void MQTT_connect() {
 
 void vccRead() {
   float v = ESP.getVcc() / 1000.0; // Convert to volts
-  dtostrf(v, 5, 2, vcc);          // Format voltage as string
+  snprintf(vcc, sizeof(vcc), "%.2f", v); // Format voltage as a string with 2 decimal places
 }
 
 void sensorRead() {
