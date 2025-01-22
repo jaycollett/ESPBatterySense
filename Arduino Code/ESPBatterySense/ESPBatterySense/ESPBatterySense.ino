@@ -15,13 +15,13 @@
 
 #define sensorPowerPin 12
 
-#define WIFI_SSID "xxxxxxxxxxxxxxx"
-#define WIFI_PASS "xxxxxxxxxxxxxxx"
+#define WIFI_SSID "xxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxx"
 #define MQTT_PORT 1883
 
 char fmversion[7] = "3.1";                   // Firmware version of this sensor
-char mqtt_server[] = "xxxxxxxxxxx";          // MQTT broker IP address
-char mqtt_username[] = "bmesensors";         // Username for MQTT broker
+char mqtt_server[] = "192.16xxxxx";          // MQTT broker IP address
+char mqtt_username[] = "xxxxxxxxxx";         // Username for MQTT broker
 char mqtt_password[] = "xxxxxxxxxxxx";       // Password for MQTT broker
 char mqtt_clientid[30];                       // Client ID for connections to MQTT broker
 
@@ -144,8 +144,8 @@ void loop() {
   // Consolidated MQTT publish payload in JSON format
   char mqttPayload[256];
   snprintf(mqttPayload, sizeof(mqttPayload),
-          "{\"temperature\": \"%s\", \"humidity\": \"%s\", \"vcc\": \"%s\", \"firmware\": \"%s\", \"battery\": \"%s\"}",
-          temperature, humidity, vcc, fmversion, batteryCapacity);
+          "{\"temperature\": \"%s\", \"humidity\": \"%s\", \"vcc\": \"%s\", \"firmware\": \"%s\"}",
+          temperature, humidity, vcc, fmversion);
 
   debug("Publishing JSON Payload: ");
   debugln(mqttPayload);
@@ -195,22 +195,6 @@ void MQTT_connect() {
 void vccRead() {
   float v = ESP.getVcc() / 1000.0; // Convert to volts
   dtostrf(v, 5, 2, vcc);          // Format voltage as string
-  CalculateBatteryPercentage(v);
-}
-
-void CalculateBatteryPercentage(float voltage) {
-  int percentage;
-
-  if (voltage <= 2.5) {
-    percentage = 0;  // Below or equal to 2.5V is 0%
-  } else if (voltage >= 3.0) {
-    percentage = 100;  // At or above 3.0V is 100%
-  } else {
-    // Linear interpolation between 2.5V and 3.0V
-    percentage = ((voltage - 2.5) / 0.5) * 100;
-  }
-
-  snprintf(batteryCapacity, sizeof(batteryCapacity), "%d", percentage);
 }
 
 void sensorRead() {
