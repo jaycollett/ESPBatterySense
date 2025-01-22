@@ -17,20 +17,20 @@
 
 #define sensorPowerPin 12
 
-#define WIFI_SSID "REPLACEME"
-#define WIFI_PASS "REPLACEME"
+#define WIFI_SSID "xxxxxxxxxxxxxxx"
+#define WIFI_PASS "xxxxxxxxxxxxxxx"
 #define MQTT_PORT 1883
 
-char  fmversion[7] = "2.8";                   // firmware version of this sensor
-char  mqtt_server[] = "192.0.0.x";          // MQTT broker IP address
-char  mqtt_username[] = "xxxxxxxxxx";         // username for MQTT broker (USE ONE)
+char  fmversion[7] = "2.9";                   // firmware version of this sensor
+char  mqtt_server[] = "xxxxxxxxxxx";          // MQTT broker IP address
+char  mqtt_username[] = "bmesensors";         // username for MQTT broker (USE ONE)
 char  mqtt_password[] = "xxxxxxxxxxxx";       // password for MQTT broker
-char  mqtt_clientid[] = "tempHumSensor4";     // client id for connections to MQTT broker
+char  mqtt_clientid[] = "tempHumSensor1";     // client id for connections to MQTT broker
 
 const unsigned int sleepTimeSeconds = 3600;   // deep sleep for 3600 seconds, 1 hour
 const unsigned int connectionAttempts = 12;   // number of attempts to connect to wifi before sleeping
 
-const String baseTopic = "tempHumSensor4";
+const String baseTopic = "bmesensors/tempHumSensor1";
 const String tempTopic = baseTopic + "/" + "temperature";
 const String humiTopic = baseTopic + "/" + "humidity";
 const String vccTopic  = baseTopic + "/" + "vcc";
