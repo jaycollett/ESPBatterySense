@@ -110,8 +110,10 @@ void loop() {
 
   unsigned int wifiTry = 0;
   while ((WiFi.status() != WL_CONNECTED) && (wifiTry < connectionAttempts)) {
-    delay(5000);
-    debugln("WiFi not connected, attempting reconnect...");
+    delay(2000); // Reduced delay to 2 seconds
+    debug("WiFi not connected, attempting reconnect (try ");
+    debug(wifiTry + 1);
+    debugln(")...");
     wifiTry++;
   }
 
@@ -169,37 +171,42 @@ void MQTT_connect() {
     return;
   }
 
-  debug("Connecting to MQTT... ");
+  debugln("Connecting to MQTT broker...");
   int retryCount = 0;
-  const int maxRetries = 10;
 
-  while (!mqttclient.connected() && retryCount < maxRetries) {
-    debug("Attempting MQTT connection...");
+  while (!mqttclient.connected() && retryCount < 10) {
     if (mqttclient.connect(mqtt_clientid, mqtt_username, mqtt_password)) {
-      debugln("connected");
+      debugln("MQTT connected.");
     } else {
       retryCount++;
-      debug("failed, rc=");
-      debug(mqttclient.state());
-      debugln(" try again in 1 second");
+      debug("Failed to connect, state: ");
+      debugln(mqttclient.state());
       delay(1000);
     }
   }
 
-  if (retryCount >= maxRetries) {
-    debugln("MQTT connection failed after maximum retries. Sleeping...");
+  if (!mqttclient.connected()) {
+    debugln("MQTT connection failed. Entering deep sleep.");
     ESP.deepSleep(sleepTimeSeconds * 1000000);
   }
 }
 
 void vccRead() {
   float v = ESP.getVcc() / 1000.0; // Convert to volts
-  snprintf(vcc, sizeof(vcc), "%.2f", v); // Format voltage as a string with 2 decimal places
+  snprintf(vcc, sizeof(vcc), "%.2f", v); // Format voltage as string
 }
 
 void sensorRead() {
   float h = sensor.readHumidity();
   float t = (sensor.readTemperature() * 1.8) + 32; // Convert to Fahrenheit
-  dtostrf(t, 5, 2, temperature);  // Format temperature as string
-  dtostrf(h, 5, 2, humidity);     // Format humidity as string
+
+  if (isnan(h) || isnan(t)) {
+    debugln("Invalid sensor readings. Defaulting to 0.00.");
+    snprintf(temperature, sizeof(temperature), "0.00");
+    snprintf(humidity, sizeof(humidity), "0.00");
+    return;
+  }
+
+  snprintf(temperature, sizeof(temperature), "%.2f", t);
+  snprintf(humidity, sizeof(humidity), "%.2f", h);
 }
